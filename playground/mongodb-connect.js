@@ -2,7 +2,7 @@ const mongodb = require('mongodb')
 const assert = require('assert')
 
 var mongoClient = mongodb.MongoClient()
-var url = 'mongodb://localhost:27017/mongo-data'
+var url = 'mongodb://localhost:27017/node-todo-api'
 
 var insertDocuments = (db, callback) => {
   var collection = db.collection('Todos')
