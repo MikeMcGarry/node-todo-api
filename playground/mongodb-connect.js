@@ -7,9 +7,9 @@ var url = 'mongodb://localhost:27017/node-todo-api'
 var insertDocuments = (db, callback) => {
   var collection = db.collection('Todos')
   collection.insertMany([
-    {mynote: "hello this is my note"},
-    {yournote: "no no this is your note"},
-    {ournote: "this is our note baby"}
+    {task: "Train legs & arms", completed: true},
+    {task: "Learn nodejs", completed: false},
+    {task: "Read for 30 minutes", completed: true}
   ], (err, result) => {
     assert.equal(err,null)
     assert.equal(3, result.result.n)
