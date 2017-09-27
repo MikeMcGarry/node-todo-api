@@ -1,45 +1,13 @@
-const mongoose = require('mongoose')
-mongoose.Promise = global.Promise
+const express = require('express')
+var {mongoose} = require('./db/mongoose')
+var {Todo} = require('./models/todo')
+var {User} = require('./models/user')
 
-var url = 'mongodb://localhost:27017/node-todo-api'
-mongoose.connect(url)
+var app = express()
 
-var run = mongoose.model('run', {
-  text: {
-    type: String,
-    required: true
-  },
-  completed: {
-    type: Boolean,
-    required: true,
-    default: false
-  },
-  completedAt: {
-    type: Number
-  }
+app.post('/', (req, res) => {
+  console.log(req)
+  res.send("heyyyyyyy")
 })
 
-var groceries = new run({text: "buy groceries", completedAt: 7898})
-
-// groceries.save().then((doc) => {
-//   console.log(`Saved ${doc}`)
-// }, (err) => {
-//   console.log(`${err}`)
-// })
-
-var user = mongoose.model('user', {
-  email: {
-    type: String,
-    required: true,
-    trim: true,
-    match: /\w+\@\w+\.[\w\.]+/
-  }
-})
-
-var mike = new user({email: "@"})
-
-mike.save().then((doc) => {
-  console.log(`Saved ${doc}`)
-}, (err) => {
-  console.log(`Your email address is invalid, please try again`)
-})
+app.listen(3000)
