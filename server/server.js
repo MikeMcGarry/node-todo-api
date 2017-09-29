@@ -20,9 +20,18 @@ app.post('/todos', (req, res) => {
     res.send(`Note Saved ${doc}`)
   }, (err) => {
     console.log('Error saving note')
-    res.status(400).send(`${err}`)
+    res.status(400).send(err)
   })
 
+})
+
+app.get('/todos', (req, res) => {
+  console.log(req.url)
+  Todo.find().then((doc) => {
+    res.status(200).send({doc})
+  }, (err) => {
+    res.status(400).send(err)
+  })
 })
 
 app.listen(port, () => {
