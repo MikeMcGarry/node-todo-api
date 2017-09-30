@@ -57,4 +57,13 @@ var mongoFindById = function(model, id) {
   }
 }
 
-var myUser = mongoFindById(user, id)
+var mongoByIdAndDelete = function(model, id) {
+  var valid = validateId(id)
+  if (valid) {
+    model.findByIdAndRemove(id).then((doc) => docFound(doc), (err) => noDocFound(err))
+  } else {
+    console.log(`Id ${id} is not valid`)
+  }
+}
+
+module.exports = {mongoByIdAndDelete}

@@ -3,8 +3,9 @@ const bodyParser = require('body-parser')
 const port = global.PORT | 3000
 
 var {mongoose} = require('./db/mongoose')
-var {Todo} = require('./models/todo')
-var {User} = require('./models/user')
+var {todo} = require('./models/todo')
+var {user} = require('./models/user')
+var {mongoByIdAndDelete} = require('./../playground/mongoose-queries')
 
 var app = express()
 
@@ -12,10 +13,10 @@ app.use(bodyParser.json())
 
 app.post('/todos', (req, res) => {
   console.log(req.body)
-  var todo = new Todo({
+  var newToDo = new todo({
     "text": req.body.text
   })
-  todo.save().then((doc) => {
+  newToDo.save().then((doc) => {
     console.log('Note saved')
     res.send(`Note Saved ${doc}`)
   }, (err) => {
@@ -25,9 +26,14 @@ app.post('/todos', (req, res) => {
 
 })
 
+app.post('/todos/delete', (req, res) => {
+  console.log(req.body)
+  mongoByIdAndDelete(todo, req.body.id)
+})
+
 app.get('/todos', (req, res) => {
   console.log(req.url)
-  Todo.find().then((doc) => {
+  todo.find().then((doc) => {
     res.status(200).send({doc})
   }, (err) => {
     res.status(400).send(err)

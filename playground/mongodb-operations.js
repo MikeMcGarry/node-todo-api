@@ -67,4 +67,4 @@ var updateDocuments = (db, collection, callback, payload=false) => {
   })
 }
 
-operation("Todos", findDocuments, handler)
+operation("todos", findDocuments, handler)
