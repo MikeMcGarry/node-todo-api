@@ -31,7 +31,26 @@ app.post('/todos', (req, res) => {
 
 })
 
-app.get('/todos/delete/:id', (req, res) => {
+app.delete('/todos/:id', (req, res) => {
+  console.log(req.body)
+  var id = req.params.id
+  if (id) {
+    todo.findByIdAndRemove(req.params.id).then((doc) => {
+      if (doc == null || doc.length == 0) {
+        res.status(404).send(`Could not find doc with ${id}`)
+      } else {
+        res.status(200).send(`Sucesfully removed doc with ${id}`)
+      }
+
+    }, (err) => {
+      res.status(404).send(`Error removing doc with ${id} due to ${err}`)
+    })
+  } else {
+    res.status(404).send(`${id} is invalid`)
+  }
+})
+
+app.patch('/todos/:id', (req, res) => {
   console.log(req.body)
   var id = req.params.id
   if (id) {
