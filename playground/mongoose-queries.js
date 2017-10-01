@@ -2,6 +2,7 @@ var {mongoose} = require('./../server/db/mongoose')
 var {todo} = require('./../server/models/todo')
 var {user} = require('./../server/models/user')
 const {ObjectID} = require('mongodb')
+const express = require('express')
 
 var id = '59c602b067d8b20566fb7758'
 
@@ -16,15 +17,18 @@ document being returned **/
 var docFound = function (doc) {
   if (doc == null || doc.length == 0)  {
     console.log(`Document could not be found`)
+    res.status(400).send('Document could not be found')
   } else {
-    console.log('Found', JSON.stringify(doc, undefined, 2))
-    return doc
+    var prettyDoc = JSON.stringify(doc, undefined, 2)
+    console.log('found', prettyDoc)
+    res.status(200).send(`Operation completed succesfully ${prettyDoc}`)
   }
 }
 
 //This handles no document being found
 var noDocFound = function (err) {
   console.log(`Document could not be found due to ${err}`)
+  res.status(400).send(`Document could not be found due to ${err}`)
 }
 
 //Finding all documents by a key, value pair
@@ -34,6 +38,7 @@ var mongoFind = function (model, finder) {
     model.find(finder).then((doc) => docFound(doc), (err) => noDocFound(err))
   } else {
     console.log(`Id ${id} is not valid`)
+    res.status(400).send(`Id ${id} is not valid`)
   }
 }
 
@@ -44,6 +49,7 @@ var mongoFindOne = function(model, finder) {
     model.findOne(finder).then((doc) => docFound(doc), (err) => noDocFound(err))
   } else {
     console.log(`Id ${id} is not valid`)
+    res.status(400).send(`Id ${id} is not valid`)
   }
 }
 
@@ -54,6 +60,7 @@ var mongoFindById = function(model, id) {
     model.findById(id).then((doc) => docFound(doc), (err) => noDocFound(err))
   } else {
     console.log(`Id ${id} is not valid`)
+    res.status(400).send(`Id ${id} is not valid`)
   }
 }
 
@@ -63,6 +70,7 @@ var mongoByIdAndDelete = function(model, id) {
     model.findByIdAndRemove(id).then((doc) => docFound(doc), (err) => noDocFound(err))
   } else {
     console.log(`Id ${id} is not valid`)
+    res.status(400).send(`Id ${id} is not valid`)
   }
 }
 

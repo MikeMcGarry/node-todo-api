@@ -3,11 +3,17 @@ const bodyParser = require('body-parser')
 const port = global.PORT | 3000
 
 var {mongoose} = require('./db/mongoose')
+var {ObjectID} = require('mongodb')
 var {todo} = require('./models/todo')
 var {user} = require('./models/user')
 var {mongoByIdAndDelete} = require('./../playground/mongoose-queries')
 
 var app = express()
+
+var validateId = function (id) {
+  var valid = ObjectID.isValid(id)
+  return valid
+}
 
 app.use(bodyParser.json())
 
@@ -26,9 +32,23 @@ app.post('/todos', (req, res) => {
 
 })
 
-app.post('/todos/delete', (req, res) => {
+app.get('/todos/delete/:id', (req, res) => {
   console.log(req.body)
-  mongoByIdAndDelete(todo, req.body.id)
+  var id = req.params.id
+  if (id) {
+    todo.findByIdAndRemove(req.params.id).then((doc) => {
+      if (doc == null || doc.length == 0) {
+        res.status(404).send(`Could not find doc with ${id}`)
+      } else {
+        res.status(200).send(`Sucesfully removed doc with ${id}`)
+      }
+
+    }, (err) => {
+      res.status(404).send(`Error removing doc with ${id} due to ${err}`)
+    })
+  } else {
+    res.status(404).send(`${id} is invalid`)
+  }
 })
 
 app.get('/todos', (req, res) => {
@@ -36,7 +56,16 @@ app.get('/todos', (req, res) => {
   todo.find().then((doc) => {
     res.status(200).send({doc})
   }, (err) => {
-    res.status(400).send(err)
+    res.status(404).send(err)
+  })
+})
+
+app.get('/todos/:id', (req, res) => {
+  console.log(req.url)
+  todo.findById(req.params.id).then((doc) => {
+    res.status(200).send({doc})
+  }, (err) => {
+    res.status(404).send(err)
   })
 })
 
