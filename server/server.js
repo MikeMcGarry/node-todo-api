@@ -1,12 +1,11 @@
 const express = require('express')
 const bodyParser = require('body-parser')
-const port = global.PORT | 3000
+const port = process.env.PORT || 3000
 
 var {mongoose} = require('./db/mongoose')
 var {ObjectID} = require('mongodb')
 var {todo} = require('./models/todo')
 var {user} = require('./models/user')
-var {mongoByIdAndDelete} = require('./../playground/mongoose-queries')
 
 var app = express()
 
