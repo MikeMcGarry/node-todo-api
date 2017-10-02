@@ -1,11 +1,12 @@
 const express = require('express')
 const bodyParser = require('body-parser')
+const _ = require('lodash')
 const port = process.env.PORT || 3000
 
-var {mongoose} = require('./db/mongoose')
-var {ObjectID} = require('mongodb')
-var {todo} = require('./models/todo')
-var {user} = require('./models/user')
+const {mongoose} = require('./db/mongoose')
+const {ObjectID} = require('mongodb')
+const {todo} = require('./models/todo')
+const {user} = require('./models/user')
 
 var app = express()
 
@@ -14,63 +15,14 @@ var validateId = function (id) {
   return valid
 }
 
+var invalidId = function (req, res, id) {
+  res.status(404).send(`${id} is an invalid id`)
+}
+
 app.use(bodyParser.json())
 
-app.post('/todos', (req, res) => {
-  console.log(req.body)
-  var newToDo = new todo({
-    "text": req.body.text
-  })
-  newToDo.save().then((doc) => {
-    console.log('Note saved')
-    res.send(`Note Saved ${doc}`)
-  }, (err) => {
-    console.log('Error saving note')
-    res.status(400).send(err)
-  })
-
-})
-
-app.delete('/todos/:id', (req, res) => {
-  console.log(req.body)
-  var id = req.params.id
-  if (id) {
-    todo.findByIdAndRemove(req.params.id).then((doc) => {
-      if (doc == null || doc.length == 0) {
-        res.status(404).send(`Could not find doc with ${id}`)
-      } else {
-        res.status(200).send(`Sucesfully removed doc with ${id}`)
-      }
-
-    }, (err) => {
-      res.status(404).send(`Error removing doc with ${id} due to ${err}`)
-    })
-  } else {
-    res.status(404).send(`${id} is invalid`)
-  }
-})
-
-app.patch('/todos/:id', (req, res) => {
-  console.log(req.body)
-  var id = req.params.id
-  if (id) {
-    todo.findByIdAndRemove(req.params.id).then((doc) => {
-      if (doc == null || doc.length == 0) {
-        res.status(404).send(`Could not find doc with ${id}`)
-      } else {
-        res.status(200).send(`Sucesfully removed doc with ${id}`)
-      }
-
-    }, (err) => {
-      res.status(404).send(`Error removing doc with ${id} due to ${err}`)
-    })
-  } else {
-    res.status(404).send(`${id} is invalid`)
-  }
-})
-
+//GET Find All Todos
 app.get('/todos', (req, res) => {
-  console.log(req.url)
   todo.find().then((doc) => {
     res.status(200).send({doc})
   }, (err) => {
@@ -78,12 +30,80 @@ app.get('/todos', (req, res) => {
   })
 })
 
+//GET Find Todo by ID
 app.get('/todos/:id', (req, res) => {
-  console.log(req.url)
-  todo.findById(req.params.id).then((doc) => {
+  id = req.params.id
+  if (!validateId(id)) {
+    invalidId(req, res, id)
+  }
+  todo.findById(id).then((doc) => {
     res.status(200).send({doc})
   }, (err) => {
     res.status(404).send(err)
+  })
+})
+
+//POST New Todo
+app.post('/todos', (req, res) => {
+  var body = _.pick(req.body, ['text'])
+  if (body.text) {
+    var newToDo = new todo({
+      "text": body.text
+    })
+  } else {
+    res.status(400).send("Please provide text to add to the todo list")
+  }
+
+  newToDo.save().then((doc) => {
+    res.send(`Note Saved ${doc}`)
+  }, (err) => {
+    res.status(400).send(err)
+  })
+})
+
+//DELETE Todo by Id
+app.delete('/todos/:id', (req, res) => {
+  var id = req.params.id
+  if (!validateId(id)) {
+    invalidId(req, res, id)
+  }
+
+  todo.findByIdAndRemove(req.params.id).then((doc) => {
+    if (doc == null || doc.length == 0) {
+      res.status(404).send(`Could not find doc with ${id}`)
+    } else {
+      res.status(200).send(`Sucesfully removed doc with ${id}`)
+    }
+
+  }, (err) => {
+    res.status(404).send(`Error removing doc with ${id} due to ${err}`)
+  })
+})
+
+//PATCH Update Todo
+app.patch('/todos/:id', (req, res) => {
+  var id = req.params.id
+  var body = _.pick(req.body, ['text', 'completed'])
+  if (!id) {
+    invalidId(req, res, id)
+  }
+
+  todo.findById(id).then((doc) => {
+    if (body.completed && _.isBoolean(body.completed)) {
+      doc.set({"completed": body.completed})
+      var timeStamp = new Date().getTime()
+      doc.set({"completedAt": timeStamp})
+    }
+
+    if (body.text && _.isString(body.text)) {
+      doc.set({"text": body.text})
+    }
+
+    doc.save().then((doc) => {
+      res.status(200).send(doc)
+    })
+  }).catch((err) => {
+    res.status(400).send(err)
   })
 })
 
