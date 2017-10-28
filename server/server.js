@@ -1,6 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const _ = require('lodash')
+const shajs = require('sha.js')
 const port = process.env.PORT || 3000
 
 const {mongoose} = require('./db/mongoose')
@@ -67,7 +68,7 @@ app.post('/users', (req, res) => {
   if (body.email && body.password) {
     var newUser = new user({
       "email": body.email,
-      "password": body.password,
+      "password": shajs('sha256').update(body.password).digest('hex'),
       "tokens": {access: 'desktop', token: 'abc56sdgss4'}
     })
   } else {
@@ -78,6 +79,15 @@ app.post('/users', (req, res) => {
     res.send(`New user created with ${doc}`)
   }, (err) => {
     res.status(400).send(err)
+  })
+})
+
+//GET All Users
+app.get('/users', (req, res) => {
+  user.find().then((doc) => {
+    res.status(200).send({doc})
+  }, (err) => {
+    res.status(404).send(err)
   })
 })
 
