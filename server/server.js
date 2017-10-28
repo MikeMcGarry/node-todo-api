@@ -61,6 +61,26 @@ app.post('/todos', (req, res) => {
   })
 })
 
+//POST New Users
+app.post('/users', (req, res) => {
+  var body = _.pick(req.body, ['email', 'password'])
+  if (body.email && body.password) {
+    var newUser = new user({
+      "email": body.email,
+      "password": body.password,
+      "tokens": {access: 'desktop', token: 'abc56sdgss4'}
+    })
+  } else {
+    res.status(400).send("Please provide an email and password")
+  }
+
+  newUser.save().then((doc) => {
+    res.send(`New user created with ${doc}`)
+  }, (err) => {
+    res.status(400).send(err)
+  })
+})
+
 //DELETE Todo by Id
 app.delete('/todos/:id', (req, res) => {
   var id = req.params.id
