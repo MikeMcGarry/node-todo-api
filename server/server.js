@@ -68,16 +68,17 @@ app.post('/users', (req, res) => {
   if (body.email && body.password) {
     var newUser = new user({
       "email": body.email,
-      "password": shajs('sha256').update(body.password).digest('hex'),
-      "tokens": {access: 'desktop', token: 'abc56sdgss4'}
+      "password": shajs('sha256').update(body.password).digest('hex')
     })
   } else {
     res.status(400).send("Please provide an email and password")
   }
 
-  newUser.save().then((doc) => {
-    res.send(`New user created with ${doc}`)
-  }, (err) => {
+  newUser.save().then(() => {
+    newUser.generateAuthToken()
+  }).then((token) => {
+    res.header('x-auth', token).send(`New user created with ${newUser}`)
+  }).catch((err) => {
     res.status(400).send(err)
   })
 })
