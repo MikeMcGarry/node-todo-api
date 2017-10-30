@@ -11,53 +11,70 @@ const {user} = require('./models/user')
 
 var app = express()
 
+//This function is used to validate the ID of a MongoDB document, returns boolean
 var validateId = function (id) {
   var valid = ObjectID.isValid(id)
   return valid
 }
 
+//This function is called when an ID is invalid
 var invalidId = function (req, res, id) {
   res.status(404).send(`${id} is an invalid id`)
 }
 
+//This is express middleware that allows us to easily work with the body of requests
 app.use(bodyParser.json())
 
 //GET Find All Todos
 app.get('/todos', (req, res) => {
+  //Find All ToDos
   todo.find().then((doc) => {
+    //Return the documents as an object with an 'ok' status code
     res.status(200).send({doc})
   }, (err) => {
+    //Return the error with a 'not found' status code
     res.status(404).send(err)
   })
 })
 
 //GET Find Todo by ID
 app.get('/todos/:id', (req, res) => {
+  //Pull ID from the URL paramaters
   id = req.params.id
+  //Check if invalid
   if (!validateId(id)) {
     invalidId(req, res, id)
   }
+  //If valid search for the document
   todo.findById(id).then((doc) => {
+    //Return the document as an object with an 'ok' status code
     res.status(200).send({doc})
   }, (err) => {
+    //Return the error with a 'not found' status code
     res.status(404).send(err)
   })
 })
 
 //POST New Todo
 app.post('/todos', (req, res) => {
+  //Pick off the 'text' field from the request body
   var body = _.pick(req.body, ['text'])
-  if (body.text) {
-    var newToDo = new todo({
-      "text": body.text
-    })
-  } else {
+  //If there is no body return 'bad request' with prompt to add text
+  if (!body.text) {
     res.status(400).send("Please provide text to add to the todo list")
   }
 
+  //Create new todo using the todo mongoose model
+  var newToDo = new todo({
+    "text": body.text
+  })
+
+  //Save the newly creted todo
   newToDo.save().then((doc) => {
-    res.send(`Note Saved ${doc}`)
+    //Return the document as an object with an 'ok' status code
+    res.status(200).send(`Note Saved ${doc}`)
   }, (err) => {
+    //Return the error with a 'bad request' status code
     res.status(400).send(err)
   })
 })
@@ -136,6 +153,13 @@ app.patch('/todos/:id', (req, res) => {
   }).catch((err) => {
     res.status(400).send(err)
   })
+})
+
+app.get('/users/me', (req, res) => {
+  var token = req.header('x-auth')
+
+  user.findByToken(token).then()
+
 })
 
 app.listen(port, () => {
