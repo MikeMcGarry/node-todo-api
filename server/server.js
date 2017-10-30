@@ -8,6 +8,7 @@ const {mongoose} = require('./db/mongoose')
 const {ObjectID} = require('mongodb')
 const {todo} = require('./models/todo')
 const {user} = require('./models/user')
+const {authorise} = require('./middleware/authorise')
 
 var app = express()
 
@@ -155,11 +156,8 @@ app.patch('/todos/:id', (req, res) => {
   })
 })
 
-app.get('/users/me', (req, res) => {
-  var token = req.header('x-auth')
-
-  user.findByToken(token).then()
-
+app.get('/users/me', authorise, (req, res) => {
+  res.status(200).send(JSON.stringify(req.user, undefined, 2))
 })
 
 app.listen(port, () => {
