@@ -75,9 +75,9 @@ app.post('/users', (req, res) => {
   }
 
   newUser.save().then(() => {
-    newUser.generateAuthToken()
+    return newUser.generateAuthToken()
   }).then((token) => {
-    res.header('x-auth', token).send(`New user created with ${newUser}`)
+    res.header('x-auth', token).send(JSON.stringify(newUser, undefined, 2))
   }).catch((err) => {
     res.status(400).send(err)
   })
