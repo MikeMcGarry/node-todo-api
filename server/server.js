@@ -1,7 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const _ = require('lodash')
-const shajs = require('sha.js')
+const bcrypt = require('bcryptjs')
 const port = process.env.PORT || 3000
 
 const {mongoose} = require('./db/mongoose')
@@ -84,15 +84,9 @@ app.post('/todos', (req, res) => {
 app.post('/users', (req, res) => {
   //Pick of the email and password properties from the body object
   var body = _.pick(req.body, ['email', 'password'])
-  //If the email or password is missing return 'bad request'status code
-  if (!body.email || !body.password) {
-    res.status(400).send("Please provide an email and/or password")
-  }
+
   //Create a new user with the email and password, hashing the password
-  var newUser = new user({
-    "email": body.email,
-    "password": shajs('sha256').update(body.password).digest('hex')
-  })
+  var newUser = new user(body)
   //Save the new user and generate an authentication token passing it back through the header
   newUser.save().then(() => {
     //Generate authentication token using instance method on the user model
@@ -181,6 +175,25 @@ app.patch('/todos/:id', (req, res) => {
 //GET user information using authorise middleware to check the header token
 app.get('/users/me', authorise, (req, res) => {
   res.status(200).send(JSON.stringify(req.user, undefined, 2))
+})
+
+app.post('/users/login', (req, res) => {
+  var body = _.pick(req.body, ['email', 'password'])
+
+  user.findOne({'email': body.email}).then((doc) => {
+    bcrypt.compare(body.password, doc.password, (err, result) => {
+
+      if (err) {
+        res.status('400').send(err)
+      }
+
+      if (result == true) {
+        res.header('x-auth', doc.tokens[0].token).send(JSON.stringify(doc, undefined, 2))
+      } else {
+        res.status('400').send('Incorrect email or password')
+      }
+    })
+  }).catch((err) => res.status('400').send(err))
 })
 
 //Start the server
