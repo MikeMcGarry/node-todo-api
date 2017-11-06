@@ -39,7 +39,7 @@ app.get('/todos', (req, res) => {
 })
 
 //GET Find Todo by ID
-app.get('/todos/:id', (req, res) => {
+app.get('/todo:id', (req, res) => {
   //Pull ID from the URL paramaters
   id = req.params.id
   //Check if invalid
@@ -57,7 +57,7 @@ app.get('/todos/:id', (req, res) => {
 })
 
 //POST New Todo
-app.post('/todos', (req, res) => {
+app.post('/todo', (req, res) => {
   //Pick off the 'text' field from the request body
   var body = _.pick(req.body, ['text'])
   //If there is no body return 'bad request' with prompt to add text
@@ -80,65 +80,9 @@ app.post('/todos', (req, res) => {
   })
 })
 
-//POST New Users
-app.post('/users', (req, res) => {
-  //Pick of the email and password properties from the body object
-  var body = _.pick(req.body, ['email', 'password'])
-
-  //Create a new user with the email and password, hashing the password
-  var newUser = new user(body)
-  //Save the new user and generate an authentication token passing it back through the header
-  newUser.save().then(() => {
-    //Generate authentication token using instance method on the user model
-    return newUser.generateAuthToken()
-  }).then((token) => {
-    //Return the token via the header
-    //Return new user information via the body
-    res.header('x-auth', token).send(JSON.stringify(newUser, undefined, 2))
-  }).catch((err) => {
-    //Return 'bad request' status code with associated error
-    res.status(400).send(err)
-  })
-})
-
-//GET All Users
-app.get('/users', (req, res) => {
-  //Find all users
-  user.find().then((doc) => {
-    //Return all users with 'ok' status code
-    res.status(200).send({doc})
-  }, (err) => {
-    //Return 'not found' status code with associated error
-    res.status(404).send(err)
-  })
-})
-
-//DELETE Todo by Id
-app.delete('/todos/:id', (req, res) => {
-  //Pick id off the url paramaters
-  var id = req.params.id
-  //Check if the id is invalid
-  if (!validateId(id)) {
-    invalidId(req, res, id)
-  }
-  //Find and remove the document by ID
-  todo.findByIdAndRemove(id).then((doc) => {
-    //If there is no document return 'not found' status code
-    if (doc == null || doc.length == 0) {
-      res.status(404).send(`Could not find doc with ${id}`)
-    } else {
-      //Else return 'ok' status with success message
-      res.status(200).send(`Sucesfully removed doc with ${id}`)
-    }
-
-  }, (err) => {
-    //Return 'not found' status code with associated error during findByIdAndRemove process
-    res.status(404).send(`Error removing doc with ${id} due to ${err}`)
-  })
-})
 
 //PATCH Update Todo
-app.patch('/todos/:id', (req, res) => {
+app.patch('/todo/:id', (req, res) => {
   //Pick up the id from the URL paramaters
   var id = req.params.id
   //Pick off the "text" and "completed" properties from the body
@@ -172,27 +116,94 @@ app.patch('/todos/:id', (req, res) => {
   })
 })
 
+//DELETE Todo by Id
+app.delete('/todo/:id', (req, res) => {
+  //Pick id off the url paramaters
+  var id = req.params.id
+  //Check if the id is invalid
+  if (!validateId(id)) {
+    invalidId(req, res, id)
+  }
+  //Find and remove the document by ID
+  todo.findByIdAndRemove(id).then((doc) => {
+    //If there is no document return 'not found' status code
+    if (doc == null || doc.length == 0) {
+      res.status(404).send(`Could not find doc with ${id}`)
+    } else {
+      //Else return 'ok' status with success message
+      res.status(200).send(`Sucesfully removed doc with ${id}`)
+    }
+
+  }, (err) => {
+    //Return 'not found' status code with associated error during findByIdAndRemove process
+    res.status(404).send(`Error removing doc with ${id} due to ${err}`)
+  })
+})
+
+//GET All Users
+app.get('/users', (req, res) => {
+  //Find all users
+  user.find().then((doc) => {
+    //Return all users with 'ok' status code
+    res.status(200).send({doc})
+  }, (err) => {
+    //Return 'not found' status code with associated error
+    res.status(404).send(err)
+  })
+})
+
 //GET user information using authorise middleware to check the header token
-app.get('/users/me', authorise, (req, res) => {
+app.get('/user/me', authorise, (req, res) => {
   res.status(200).send(JSON.stringify(req.user, undefined, 2))
 })
 
-app.post('/users/login', (req, res) => {
+//POST New Users
+app.post('/user', (req, res) => {
+  //Pick of the email and password properties from the body object
   var body = _.pick(req.body, ['email', 'password'])
 
+  //Create a new user with the email and password, hashing the password
+  var newUser = new user(body)
+  //Save the new user and generate an authentication token passing it back through the header
+  newUser.save().then(() => {
+    //Generate authentication token using instance method on the user model
+    return newUser.generateAuthToken()
+  }).then((token) => {
+    //Return the token via the header
+    //Return new user information via the body
+    res.header('x-auth', token).send(JSON.stringify(newUser, undefined, 2))
+  }).catch((err) => {
+    //Return 'bad request' status code with associated error
+    res.status(400).send(err)
+  })
+})
+
+
+//POST login details to login
+app.post('/user/login', (req, res) => {
+  //Pick up email and password from the body
+  var body = _.pick(req.body, ['email', 'password'])
+
+  //Look for a user with the email address entered
   user.findOne({'email': body.email}).then((doc) => {
+    //Compare the password with the saved password using bcrypt
     bcrypt.compare(body.password, doc.password, (err, result) => {
 
       if (err) {
+        //Return any errors with a 'bad request status'
         res.status('400').send(err)
       }
 
+      //If the password is correct
       if (result == true) {
+        //Return the x-auth token to the header as well as the user information
         res.header('x-auth', doc.tokens[0].token).send(JSON.stringify(doc, undefined, 2))
       } else {
+        //Return wrong email or password message with 'bad request' status
         res.status('400').send('Incorrect email or password')
       }
     })
+    //Handle any errors on the findOne method
   }).catch((err) => res.status('400').send(err))
 })
 
@@ -200,3 +211,5 @@ app.post('/users/login', (req, res) => {
 app.listen(port, () => {
   console.log(`started on port ${port}`)
 })
+
+module.exports.app = app
