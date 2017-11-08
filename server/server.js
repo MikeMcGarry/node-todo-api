@@ -20,7 +20,7 @@ var validateId = function (id) {
 
 //This function is called when an ID is invalid
 var invalidId = function (req, res, id) {
-  res.status(404).send(`${id} is an invalid id`)
+  return res.status(400).send(`${id} is an invalid id`)
 }
 
 //This is express middleware that allows us to easily work with the body of requests
@@ -39,20 +39,24 @@ app.get('/todos', (req, res) => {
 })
 
 //GET Find Todo by ID
-app.get('/todo:id', (req, res) => {
+app.get('/todo/:id', (req, res) => {
   //Pull ID from the URL paramaters
   id = req.params.id
   //Check if invalid
   if (!validateId(id)) {
-    invalidId(req, res, id)
+    return invalidId(req, res, id)
   }
   //If valid search for the document
   todo.findById(id).then((doc) => {
     //Return the document as an object with an 'ok' status code
-    res.status(200).send({doc})
+    if (doc == null) {
+      return res.status(404).send(`Note with id ${id} does not exist`)
+    }
+    return res.status(200).send({doc})
   }, (err) => {
     //Return the error with a 'not found' status code
-    res.status(404).send(err)
+    //What sort of error would even trigger this? Shutting down MongoDB seems to just kill everything.
+    return res.status(404).send(err)
   })
 })
 
@@ -62,7 +66,7 @@ app.post('/todo', (req, res) => {
   var body = _.pick(req.body, ['text'])
   //If there is no body return 'bad request' with prompt to add text
   if (!body.text) {
-    res.status(400).send("Please provide text to add to the todo list")
+    return res.status(400).send("Please provide text to add to the todo list")
   }
 
   //Create new todo using the todo mongoose model
@@ -73,10 +77,10 @@ app.post('/todo', (req, res) => {
   //Save the newly creted todo
   newToDo.save().then((doc) => {
     //Return the document as an object with an 'ok' status code
-    res.status(200).send(`Note Saved ${doc}`)
+    return res.status(200).send(`Note Saved ${doc}`)
   }, (err) => {
     //Return the error with a 'bad request' status code
-    res.status(400).send(err)
+    return res.status(400).send(err)
   })
 })
 
@@ -108,11 +112,11 @@ app.patch('/todo/:id', (req, res) => {
     //Save the new document
     doc.save().then((doc) => {
       //Return 'ok' status code with document
-      res.status(200).send(doc)
+      return res.status(200).send(doc)
     })
   }).catch((err) => {
     //Return 'bad request' status code with associated error
-    res.status(400).send(err)
+    return res.status(400).send(err)
   })
 })
 
@@ -128,15 +132,15 @@ app.delete('/todo/:id', (req, res) => {
   todo.findByIdAndRemove(id).then((doc) => {
     //If there is no document return 'not found' status code
     if (doc == null || doc.length == 0) {
-      res.status(404).send(`Could not find doc with ${id}`)
+      return res.status(404).send(`Could not find doc with ${id}`)
     } else {
       //Else return 'ok' status with success message
-      res.status(200).send(`Sucesfully removed doc with ${id}`)
+      return res.status(200).send(`Sucesfully removed doc with ${id}`)
     }
 
   }, (err) => {
     //Return 'not found' status code with associated error during findByIdAndRemove process
-    res.status(404).send(`Error removing doc with ${id} due to ${err}`)
+    return res.status(404).send(`Error removing doc with ${id} due to ${err}`)
   })
 })
 
@@ -145,16 +149,16 @@ app.get('/users', (req, res) => {
   //Find all users
   user.find().then((doc) => {
     //Return all users with 'ok' status code
-    res.status(200).send({doc})
+    return res.status(200).send({doc})
   }, (err) => {
     //Return 'not found' status code with associated error
-    res.status(404).send(err)
+    return res.status(404).send(err)
   })
 })
 
 //GET user information using authorise middleware to check the header token
 app.get('/user/me', authorise, (req, res) => {
-  res.status(200).send(JSON.stringify(req.user, undefined, 2))
+  return res.status(200).send(JSON.stringify(req.user, undefined, 2))
 })
 
 //POST New Users
@@ -171,10 +175,10 @@ app.post('/user', (req, res) => {
   }).then((token) => {
     //Return the token via the header
     //Return new user information via the body
-    res.header('x-auth', token).send(JSON.stringify(newUser, undefined, 2))
+    return res.header('x-auth', token).send(JSON.stringify(newUser, undefined, 2))
   }).catch((err) => {
     //Return 'bad request' status code with associated error
-    res.status(400).send(err)
+    return res.status(400).send(err)
   })
 })
 
@@ -191,16 +195,16 @@ app.post('/user/login', (req, res) => {
 
       if (err) {
         //Return any errors with a 'bad request status'
-        res.status('400').send(err)
+        return res.status('400').send(err)
       }
 
       //If the password is correct
       if (result == true) {
         //Return the x-auth token to the header as well as the user information
-        res.header('x-auth', doc.tokens[0].token).send(JSON.stringify(doc, undefined, 2))
+        return res.header('x-auth', doc.tokens[0].token).send(JSON.stringify(doc, undefined, 2))
       } else {
         //Return wrong email or password message with 'bad request' status
-        res.status('400').send('Incorrect email or password')
+        return res.status('400').send('Incorrect email or password')
       }
     })
     //Handle any errors on the findOne method
