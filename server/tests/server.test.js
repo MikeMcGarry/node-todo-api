@@ -1,12 +1,28 @@
 const request = require('supertest')
 const expect = require('expect')
 const {app} = require('./../server')
+const {todo} = require('./../models/todo')
 
 var docIds = {
   validID:'59d0357eb2a16e04dcf424b1',
   validNoDocID:'59d0357eb2a16e04dcf424ba',
   invalidID:'6e04dcf42'
 }
+
+var testDoc = {
+  _id: docIds.validID,
+  "text": "Hang out the washing"
+}
+
+//Remove all notes then add in one note
+beforeEach((done) => {
+  todo.remove({}).then(() => {
+    var testNote = new todo(testDoc)
+    return todo.save(testNote)
+  }).then(() => {
+    done()
+  })
+})
 
 //Testing ToDos
 describe('Todo', () => {
@@ -51,6 +67,28 @@ describe('Todo', () => {
       })
 
     })
+
+    describe('/todos', () => {
+
+      it('Testing with todos available', (done) => {
+        request(app)
+          .get(`/todos`)
+          .expect(200)
+          .expect((res) => {
+            expect()
+          .end(done)
+          })
+      })
+
+      it('Testing with no todos available', (done) => {
+        todo.remove({}).then(() => {
+          request(app)
+            .get(`/todos`)
+            .expect(404)
+            .end(done)
+          })
+      })
+    })
   })
 
 
@@ -88,4 +126,21 @@ describe('Todo', () => {
 
     })
   })
+
+  describe('Patch', () => {
+
+    describe('/todo/:id', () => {
+
+      it('Testing with invalid id - It should return "bad request" status and an invalid id error', (done) => {
+        request(app)
+          .patch(`/todo/${docIds.invalidID}`)
+          .expect(400)
+          .expect(`${docIds.invalidID} is an invalid id`)
+          .end(done)
+      })
+      
+    })
+  })
+
+
 })
