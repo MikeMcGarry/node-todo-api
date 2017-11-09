@@ -18,7 +18,7 @@ var testDoc = {
 beforeEach((done) => {
   todo.remove({}).then(() => {
     var testNote = new todo(testDoc)
-    return todo.save(testNote)
+    return testNote.save(testNote)
   }).then(() => {
     done()
   })
@@ -74,11 +74,11 @@ describe('Todo', () => {
         request(app)
           .get(`/todos`)
           .expect(200)
-          .expect((res) => {
-            expect()
+          // .expect((res) => {
+          //   expect(res.body.doc).toHaveProperty('text')
           .end(done)
-          })
       })
+
 
       it('Testing with no todos available', (done) => {
         todo.remove({}).then(() => {
@@ -138,7 +138,7 @@ describe('Todo', () => {
           .expect(`${docIds.invalidID} is an invalid id`)
           .end(done)
       })
-      
+
     })
   })
 

@@ -31,10 +31,10 @@ app.get('/todos', (req, res) => {
   //Find All ToDos
   todo.find().then((doc) => {
     //Return the documents as an object with an 'ok' status code
-    res.status(200).send({doc})
+    return res.status(200).send({doc})
   }, (err) => {
     //Return the error with a 'not found' status code
-    res.status(404).send(err)
+    return res.status(404).send(err)
   })
 })
 
@@ -92,7 +92,7 @@ app.patch('/todo/:id', (req, res) => {
   //Pick off the "text" and "completed" properties from the body
   var body = _.pick(req.body, ['text', 'completed'])
   //Check for invalid ID
-  if (!id) {
+  if (!validateId(id)) {
     invalidId(req, res, id)
   }
   //Find todo by ID
